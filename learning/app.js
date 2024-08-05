@@ -100,10 +100,142 @@ const log = console.log;
         y: 100
     })
 
-    // then make sure to add our text to the game
+    // PIXI operates using a stage analogy, where all of the objects in the game are children of the stage.
+    // we add the objects to the stage by usingthe addChild() function
     application.stage.addChild(text);
     application.stage.addChild(text2);
-
-    // then we add the object to the stage by usingthe addChild() function
     application.stage.addChild(rectangle);
+
+    // time to load an image
+    // in order to use images in our project, we have to load images into Texture assets, use the Texture to create a Sprite, and then add the Sprite to the Stage
+    // lets import an image asset step by step
+
+    // step 1, get the image from a folder and save it as a texture
+    const testTexture = await PIXI.Assets.load('./images/desert-block.png');
+    // step 2
+    const testSprite = new PIXI.Sprite(testTexture);
+    // we can also change its scale
+    testSprite.scale.x = 2;
+    testSprite.scale.y = 2;
+    // we can also set the scale in one function to get the same result
+    testSprite.scale.set(2,2);
+    // we can then transform the object using a few different methods
+    testSprite.x = 200;
+    testSprite.y = 200;
+    // or
+    testSprite.position.x = 200;
+    testSprite.position.y = 200;
+    // or
+    testSprite.position.set(200,200);
+    // we can also rotate the object
+    testSprite.rotation = 0;
+    // remember: we have to set the pivot point of our sprite to the center of the object, otherwise it will be in the top right by default
+    testSprite.anchor.x = 0.5;
+    testSprite.anchor.y = 0.5;
+
+    // in order for our events to work, we need to set the eventMode to static
+    testSprite.eventMode = 'static';
+
+    // lets do some interaction to make the rectangle move wherever I click
+    testSprite.on('pointerdown', (event) => {
+        testSprite.position.x += 200;
+        testSprite.position.y += 200;
+    } );
+
+    // let's also change the cursor when the player hovers over it
+    testSprite.cursor = 'pointer';
+
+    application.stage.addChild(testSprite);
+
+    /// if we want things to happen in the game, we need to use a ticker
+    /// tickers essentially run the game, and all of the code within them is executed at the framerater of the user's monitor
+    /// in most cases this will be 60fps, in others it may be 120fps, or more
+
+    // let's create a time variable to track how far along in the game we are
+    let time = 0;
+
+    // then run the ticker once every frame, increasing time and moving our sprite
+    application.ticker.add(() => {
+        testSprite.position.x = Math.sin(time/100) * 100 + 300;
+        testSprite.position.y = Math.cos(time/100) * 100 + 300;
+        time += 1;
+    });
+
+    // when we want to load an asset but that asset might be too big to load quickly, 
+    // we want to make sure we have the asset before we try to use it
+    //       we use the await keyword to make sure this line waits before executing the next one
+    const gunkTexture = await PIXI.Assets.load('./images/ground-gunk.png');
+    const gunkSprite = new PIXI.Sprite(gunkTexture);
+    gunkSprite.position.set(300, 300);
+    application.stage.addChild(gunkSprite);
+
+    // lets import a sprite sheet, in this case we'll do the idle fish
+    // lets create the data for the atlast
+    const playerIdleAtlasData =
+    {
+        frames: {
+            idle1:{
+                frame: {x: 0, y:0, w:24, h:24},
+                sourceSize: {w:24, h:24},
+            },
+            idle2:{
+                frame: {x: 28, y:0, w:24, h:24},
+                sourceSize: {w:24, h:24},
+            },
+            idle3:{
+                frame: {x: 56, y:0, w:24, h:24},
+                sourceSize: {w:24, h:24},
+            },
+            idle4:{
+                frame: {x: 84, y:0, w:24, h:24},
+                sourceSize: {w:24, h:24},
+            }
+        },
+
+        // then after our frames, add the information about the object
+        meta: {
+            image: '/images/fish-idle.png',
+            size: {w: 108, h: 24}
+        },
+
+        // and then lets declare our animations on the sheet
+        animations: {
+            // array the frams by name
+            idle: ['idle1', 'idle2', 'idle3', 'idle4']
+        }
+    }
+
+    // then lets import the spritesheet
+    const playerIdleTexture = await PIXI.Assets.load(playerIdleAtlasData.meta.image);
+    const playerIdleSpritesheet = new PIXI.Spritesheet(playerIdleTexture, playerIdleAtlasData);
+    // then parse the spritesheet so that we can use it
+    await playerIdleSpritesheet.parse();
+    // now let's create an animated sprite for our player
+    const playerIdleSprite = new PIXI.AnimatedSprite(playerIdleSpritesheet.animations.idle);
+    // now, make sure you play the object so that the animation begins
+    playerIdleSprite.play();
+    // we can also set the animation speed
+    playerIdleSprite.animationSpeed = 0.1;
+    playerIdleSprite.scale = 10;
+    // !!!
+    // to stop our sprite from looking blurry, be sure to make the scale mode "NEAREST"
+    playerIdleTexture.source.scaleMode = 'nearest';
+    // !!!
+    // then, add it to the stage
+    application.stage.addChild(playerIdleSprite);
+
+    // now that that's setup, lets tile some sprites around the area. PIXI has a constructor setup for this, but it is a bit easier to do it by hand
+    const tileSize = 32;
+    const floorTileTexture = await PIXI.Assets.load('/images/desert-tile-1.png');
+    floorTileTexture.source.scaleMode = 'nearest';
+    for (let x = 0; x < screen.width; x += tileSize) {
+        for (let y = 0; y < screen.height; y += tileSize)
+            {
+            var spr = new PIXI.Sprite(floorTileTexture);
+            // here we use the addChildAt function and place the objects as low as they can be placed
+            application.stage.addChildAt(spr,0).position.set(x,y);
+        }
+    }
+
+
 })();
