@@ -7,7 +7,7 @@ const log = console.log;
     const application = new PIXI.Application();
 
     // in here we can change our initialization properties
-    await application.init({
+    await application.init({ 
         width: 1024,
         height: 768,
         /// we can also say
@@ -237,5 +237,95 @@ const log = console.log;
         }
     }
 
+    // now we need a function to perform keyboard inputs
+    function keyboard(value) {
+        const key = {};
+        key.value = value;
+        key.isDown = false;
+        key.isUp = true;
+        key.press = undefined;
+        key.release = undefined;
+        //The `downHandler`
+        key.downHandler = (event) => {
+          if (event.key === key.value) {
+            if (key.isUp && key.press) {
+              key.press();
+            }
+            key.isDown = true;
+            key.isUp = false;
+            event.preventDefault();
+          }
+        };
+      
+        //The `upHandler`
+        key.upHandler = (event) => {
+          if (event.key === key.value) {
+            if (key.isDown && key.release) {
+              key.release();
+            }
+            key.isDown = false;
+            key.isUp = true;
+            event.preventDefault();
+          }
+        };
+      
+        //Attach event listeners
+        const downListener = key.downHandler.bind(key);
+        const upListener = key.upHandler.bind(key);
+        
+        window.addEventListener("keydown", downListener, false);
+        window.addEventListener("keyup", upListener, false);
+        
+        // Detach event listeners
+        key.unsubscribe = () => {
+          window.removeEventListener("keydown", downListener);
+          window.removeEventListener("keyup", upListener);
+        };
+        
+        return key;
+      }
+
+    // we want to work with movement, so lets setup some axes
+    var px = 0; var py = 0;
+    let input = {px , py};
+    let moveSpeed = 2;
+
+    // now we can create our key objects to listen for specific keys
+    const wKey = keyboard('w');
+    const sKey = keyboard('s');
+    const dKey = keyboard('d');
+    const aKey = keyboard('a');
+    // we can then do specific things with our keys
+    function capturePlayerInput()
+    {
+        // reset it each frame
+        input.px = 0;
+        input.py = 0;      
+
+        if (wKey.isDown) input.py = -1;
+        if (sKey.isDown) input.py = 1;
+        if (dKey.isDown) input.px = 1;
+        if (aKey.isDown) input.px = -1;
+    }
+    // then let's apply our movement to our character
+    function applyPlayerMovement()
+    {
+        if (input.px + input.py > 1)
+        {
+            var finalInput = input.px + input.py;
+            var mult = 1 - (finalInput - 1); // lower this by the amount that it is over 1
+            input.x *= mult;
+            input.y *= mult;
+        }
+
+        playerIdleSprite.position.x += input.px * moveSpeed;
+        playerIdleSprite.position.y += input.py * moveSpeed;
+    }
+
+    // now apply movement to the player
+    application.ticker.add(() => {
+        capturePlayerInput();
+        applyPlayerMovement();
+    });
 
 })();
