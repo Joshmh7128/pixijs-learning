@@ -421,7 +421,15 @@ const log = console.log;
         for (let i = 0; i < wallTiles.length; i++)
         {
             // now compare the player's box to all of the boxes of the tiles
-            attemptPlayerMovement(cursorSprite, wallTiles[i]);
+            if (attemptPlayerMovement(cursorSprite, wallTiles[i]))
+            {
+                console.log("collision registered");
+                colcheckText.style.fill = '00ff00'
+                break;
+            } else
+            {
+                colcheckText.style.fill = 'ffffff'
+            }
         }
 
         // to make sure this works correctly we need to modify the global object position
@@ -484,14 +492,14 @@ const log = console.log;
         colcheckText.text = aPx + ", " + aPy;
 
         // shape
-        aTLX = aPx - rectA.width/2;
-        aTLY = aPy - rectA.height/2;
-        aTRX = aPx + rectA.width/2;
-        aTRY = aPy - rectA.height/2;        
-        aBLX = aPx - rectA.width/2;
-        aBLY = aPy + rectA.height/2;
-        aBRX = aPx + rectA.width/2;
-        aBRY = aPy + rectA.height/2;
+        aTLX = aPx - rectA.width/2 * worldScale;
+        aTLY = aPy - rectA.height/2 * worldScale;
+        aTRX = aPx + rectA.width/2 * worldScale;
+        aTRY = aPy - rectA.height/2 * worldScale;        
+        aBLX = aPx - rectA.width/2 * worldScale;
+        aBLY = aPy + rectA.height/2 * worldScale;
+        aBRX = aPx + rectA.width/2 * worldScale;
+        aBRY = aPy + rectA.height/2 * worldScale;
 
         var aTopLeft = [aTLX, aTLY];
         var aTopRight = [aTRX, aTRY];
@@ -501,19 +509,18 @@ const log = console.log;
         // get the same points for the second rectangle
         var bPx, bPy, bTLX, bTLY, bTRX, bTRY, bBLX, bBLY, bBRX, bBRY;
         
-        colcheckText2.text = aPx + ", " + aPy;
         // pivot
         bPx = rectB.getGlobalPosition().x;
         bPy = rectB.getGlobalPosition().y;
         // shape
-        bTLX = bPx - rectB.width/2;
-        bTLY = bPy - rectB.height/2;
-        bTRX = bPx + rectB.width/2;
-        bTRY = bPy + rectB.height/2;        
-        bBLX = bPx - rectB.width/2;
-        bBLY = bPy - rectB.height/2;
-        bBRX = bPx + rectB.width/2;
-        bBRY = bPy + rectB.height/2;
+        bTLX = bPx;
+        bTLY = bPy;
+        bTRX = bPx + rectB.width * worldScale;
+        bTRY = bPy;        
+        bBLX = bPx;
+        bBLY = bPy + rectB.height * worldScale;
+        bBRX = bPx + rectB.width * worldScale;
+        bBRY = bPy + rectB.height * worldScale;
 
         var bTopLeft = [bTLX, bTLY];
         var bTopRight = [bTRX, bTRY];
@@ -552,12 +559,18 @@ const log = console.log;
         (pointInBounds(aTopLeft, bTopLeft, bBottomRight) ||
         pointInBounds(aTopRight, bTopLeft, bBottomRight) || 
         pointInBounds(aBottomRight, bTopLeft, bBottomRight) ||
-        pointInBounds(aBottomLeft, bTopLeft, bBottomRight))
+        pointInBounds(aBottomLeft, bTopLeft, bBottomRight)) == true
+        
+        ||        
+        
+        (pointInBounds(bTopLeft, aTopLeft, aBottomRight) ||
+        pointInBounds(bTopRight, aTopLeft, aBottomRight) || 
+        pointInBounds(bBottomRight, aTopLeft, aBottomRight) ||
+        pointInBounds(bBottomLeft, aTopLeft, aBottomRight)) == true
         )
         {
-            colcheckText2.style.fill = '#ff0000';
-        } else {
-            // colcheckText2.style.fill = '#ffffff';
+            console.log("collision occurred between " + rectA.name + " and " + rectB.name + " at position: " );
+            return true;
         }
     }
 
@@ -568,10 +581,8 @@ const log = console.log;
         if ((point[0] > topLeft[0] & point[0] < bottomRight[0]) & (point[1] > topLeft[1] & point[1] < bottomRight[1]))
         {
             // collision has occured because a point within the two bounds overlapped with another of the bounds!
-            console.log("collision: " + point[0] + ", " + point[1]);
+            console.log(point[0] + ", " + point[1]);
             return true;
-        } else {
-            return false;
         }
     }
 
@@ -661,27 +672,10 @@ const log = console.log;
                 fontWeight: 'bold',
                 stroke: { color: '#000000', width: 5},
             } });
-
-                
-    const colcheckText2 = new PIXI.Text({
-        text: "",
-        style: {
-            // fill the same as color
-            fill: '#ffffff',
-            // we can change the font
-            fontFamily: 'Arial',
-            fontSize: 20,
-            fontStyle: 'italic',
-            fontWeight: 'bold',
-            stroke: { color: '#000000', width: 5},
-        } });
-    
     
     application.stage.addChild(mousePosText); 
     colcheckText.position.y = 22;       
-    application.stage.addChild(colcheckText);
-    colcheckText2.position.y = 44;       
-    application.stage.addChild(colcheckText2);        
+    application.stage.addChild(colcheckText); 
 
     // lets place a sprite in the scene as our cursor
     const cursorTexture = await PIXI.Assets.load('./images/cursor.png');
