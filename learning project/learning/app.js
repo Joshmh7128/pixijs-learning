@@ -199,7 +199,7 @@ const log = console.log;
 
     // lets import a sprite sheet, in this case we'll do the idle fish
     // lets create the data for the atlast
-    const playerIdleAtlasData =
+    const playerAtlasData =
     {
         frames: {
             idle1:{
@@ -207,47 +207,74 @@ const log = console.log;
                 sourceSize: {w:24, h:24},
             },
             idle2:{
-                frame: {x: 28, y:0, w:24, h:24},
+                frame: {x: 24, y:0, w:24, h:24},
                 sourceSize: {w:24, h:24},
             },
             idle3:{
-                frame: {x: 56, y:0, w:24, h:24},
+                frame: {x: 48, y:0, w:24, h:24},
                 sourceSize: {w:24, h:24},
             },
             idle4:{
-                frame: {x: 84, y:0, w:24, h:24},
+                frame: {x: 24*3, y:0, w:24, h:24},
+                sourceSize: {w:24, h:24},
+            },
+            run1:{
+                frame: {x: 24*4, y:0, w:24, h:24},
+                sourceSize: {w:24, h:24},
+            },
+            run2:{
+                frame: {x: 24*5, y:0, w:24, h:24},
+                sourceSize: {w:24, h:24},
+            },
+            run3:{
+                frame: {x: 24*6, y:0, w:24, h:24},
+                sourceSize: {w:24, h:24},
+            },
+            run4:{
+                frame: {x: 24*7, y:0, w:24, h:24},
+                sourceSize: {w:24, h:24},
+            },
+            run5:{
+                frame: {x: 24*8, y:0, w:24, h:24},
                 sourceSize: {w:24, h:24},
             }
         },
 
         // then after our frames, add the information about the object
         meta: {
-            image: '/images/fish-idle.png',
-            size: {w: 108, h: 24}
+            image: '/images/fish-sheet.png',
+            size: {w: 216, h: 24}
         },
 
         // and then lets declare our animations on the sheet
         animations: {
             // array the frams by name
-            idle: ['idle1', 'idle2', 'idle3', 'idle4']
+            idle: ['idle1', 'idle2', 'idle3', 'idle4'],
+            run: ['run1','run2','run3','run4','run5']
         }
     }
 
     // then lets import the spritesheet
-    const playerIdleTexture = await PIXI.Assets.load(playerIdleAtlasData.meta.image);
-    const playerIdleSpritesheet = new PIXI.Spritesheet(playerIdleTexture, playerIdleAtlasData);
+    const playerTexture = await PIXI.Assets.load(playerAtlasData.meta.image);
+    const playerSpritesheet = new PIXI.Spritesheet(playerTexture, playerAtlasData);
     // then parse the spritesheet so that we can use it
-    await playerIdleSpritesheet.parse();
+    await playerSpritesheet.parse();
     // now let's create an animated sprite for our player
-    const playerIdleSprite = new PIXI.AnimatedSprite(playerIdleSpritesheet.animations.idle);
+    let playerIdleSprite = new PIXI.AnimatedSprite(playerSpritesheet.animations.idle);
+    let playerRunSprite = new PIXI.AnimatedSprite(playerSpritesheet.animations.run);
+    // make sure the run sprite isn't visible yet
+    playerRunSprite.alpha = 0;
     // now, make sure you play the object so that the animation begins
     playerIdleSprite.play();
+    playerRunSprite.play();
     // we can also set the animation speed
-    playerIdleSprite.animationSpeed = 0.1;
+    playerIdleSprite.animationSpeed = 0.2;
+    playerRunSprite.animationSpeed = 0.2;
     let localPlayerScale = -0.4; // how much is the player's local scale modified in the world container?
     playerIdleSprite.scale = worldScale + localPlayerScale; // scale our player with the world
+    playerRunSprite.scale = worldScale + localPlayerScale; // scale our player with the world
     // set our scale mode
-    playerIdleTexture.source.scaleMode = 'nearest';
+    playerTexture.source.scaleMode = 'nearest';
     // then, add it to the stage
     // we need to set our sprite's anchor to the center
     playerIdleSprite.anchor.x = 0.5;
@@ -255,8 +282,18 @@ const log = console.log;
     // position them in the center of the world
     playerIdleSprite.position.x = worldX / 2;
     playerIdleSprite.position.y = worldY / 2;
+    // we need to set our sprite's anchor to the center
+    playerRunSprite.anchor.x = 0.5;
+    playerRunSprite.anchor.y = 0.5;
+    // position them in the center of the world
+    playerRunSprite.position.x = worldX / 2;
+    playerRunSprite.position.y = worldY / 2;
 
-    worldContainer.addChild(playerIdleSprite);
+    // now lets make a container for our player
+    const playerContainer = new PIXI.Container();
+    playerContainer.addChild(playerIdleSprite);
+    playerContainer.addChild(playerRunSprite);
+    worldContainer.addChild(playerContainer);
 
     // then so that we can check collisions later, add an invisible rectangle over the player
     const playerBox = new PIXI.Graphics()
@@ -269,7 +306,7 @@ const log = console.log;
     // then child the playerBox to the player
     playerBox.position.x = playerIdleSprite.position.x;
     playerBox.position.y = playerIdleSprite.position.y;
-    application.stage.addChildAt(playerBox, application.stage.children.length);
+    playerContainer.addChildAt(playerBox, application.stage.children.length);
 
 
     // you can find more about the keyboard code below, here - https://github.com/kittykatattack/learningPixi?tab=readme-ov-file#keyboard
@@ -361,6 +398,8 @@ const log = console.log;
         if (arrowLeft.isDown) moveCamera(1,0);
     }
 
+
+
     // now handle our key presses through the events of the objects
     plusKey.press = () => {
         worldScale += 0.1;
@@ -390,8 +429,42 @@ const log = console.log;
     let worldXLF = 0;
     let worldYLF = 0;
 
-   
+    let lastInput = input;
 
+    function managePlayerSprites()
+    {
+        // now lets say that when we have movement our sprite should change
+        // moving right or up
+        if (input.px > 0 || input.py != 0)
+        {
+            // set scale
+            playerIdleSprite.scale.x = (worldScale + localPlayerScale) * 1;
+            playerRunSprite.scale.x = (worldScale + localPlayerScale) * 1;
+            // set alpha
+            playerIdleSprite.alpha = 0;
+            playerRunSprite.alpha = 1;
+        }
+
+        // moving left
+        if (input.px < 0)
+        {
+            // set scale
+            playerIdleSprite.scale.x = (worldScale + localPlayerScale) * -1;
+            playerRunSprite.scale.x = (worldScale + localPlayerScale) * -1;
+            // set alpha
+            playerIdleSprite.alpha = 0;
+            playerRunSprite.alpha = 1;
+        }
+        
+        // not moving
+        if (input.px == 0 && input.py == 0)
+        {
+            // set alpha
+            playerIdleSprite.alpha = 1;
+            playerRunSprite.alpha = 0;
+        }
+    }
+   
     // then let's apply our character's movement to our world
     function applyPlayerMovement()
     {
@@ -406,6 +479,9 @@ const log = console.log;
             input.x *= mult;
             input.y *= mult;
         }
+
+        // run this while doing movement
+        managePlayerSprites();
 
         // now we want to check and ensure that we can move to the new position. If the player's new proposed movement position is
         // within the bounds of a wall collider, then we cannot move there. to do this we loop through all of our walls and check if the player's new 
@@ -438,10 +514,9 @@ const log = console.log;
         // since we want the player to move exactly the same amount as the world is, we need to get how much the world has moved since last frame, and move the player with it
         // after that move our player around, so that they always stay in the centered on the screen
         // to make sure this works correctly we need to modify the global object position
-        playerIdleSprite.position.x += worldXDelta / worldScale; // we divide this number by the world scale so that it moves according to the relative scale of the environment
-        playerIdleSprite.position.y += worldYDelta / worldScale; // when we change the container size it is changing in pixels, so the delta will be more / less pixels in size.
+        playerContainer.position.x += worldXDelta / worldScale; // we divide this number by the world scale so that it moves according to the relative scale of the environment
+        playerContainer.position.y += worldYDelta / worldScale; // when we change the container size it is changing in pixels, so the delta will be more / less pixels in size.
     
-        // pointInBounds([mousePositionX, mousePositionY], [0,0], [80,100]);
     }
 
     let debugTL = new PIXI.Graphics()
