@@ -92,7 +92,7 @@ const log = console.log;
 
     // set the wall tile spacing to larger than the size of the sprite so that we can place them spaced out in the environment
     const wallTileSpacing = 48 * 2;
-    let wallTiles = []; // this array holds all of our wall tiles in the game, so we can check against them later
+    let wallRects = []; // this array holds all of our wall tiles in the game, so we can check against them later
     
     // then let's loop and place some walls
     for (let x = 0; x < worldSize.worldX; x += wallTileSpacing) {
@@ -121,7 +121,7 @@ const log = console.log;
                     //rec.pivot.x = rec.position.x + rec.width/2;
                     //rec.pivot.y = rec.position.y + rec.height/2;
                     // then add our sprite to the array
-                    wallTiles.push(rec);
+                    wallRects.push(rec);
                 }
         }
     }
@@ -165,7 +165,7 @@ const log = console.log;
     // set the floor tile size to the size of the sprite so that we can place them correctly
     const floorTileSize = 64;
   
-    let renderFloor = false;
+    let renderFloor = true;
     // now lets place our tiles throughout the world.
     if (renderFloor)
     {
@@ -325,7 +325,9 @@ const log = console.log;
 
     // we want to work with movement, so lets setup some axes
     var px = 0; var py = 0;
-    let input = {px , py};
+    let input = {px, py};
+    input.px = 0;
+    input.py = 0;
     let moveSpeed = 2;
 
     // now we can create our key objects to listen for specific keys
@@ -388,12 +390,15 @@ const log = console.log;
     let worldXLF = 0;
     let worldYLF = 0;
 
+   
+
     // then let's apply our character's movement to our world
     function applyPlayerMovement()
     {
-        // always make sure the player's box is at their position
+        // always make sure the player's box is at their position so that our collisions are accurate
         playerBox.position = playerIdleSprite.getGlobalPosition();
 
+        // then make sure our inputs are not too fast
         if (input.px + input.py > 1)
         {
             var finalInput = input.px + input.py;
@@ -402,36 +407,36 @@ const log = console.log;
             input.y *= mult;
         }
 
+        // now we want to check and ensure that we can move to the new position. If the player's new proposed movement position is
+        // within the bounds of a wall collider, then we cannot move there. to do this we loop through all of our walls and check if the player's new 
+        // proposed position overlaps with any of them
+        for (let i = 0; i < wallRects.length; i ++)
+        {
+            // now check our position using the pointInBounds() function 
+            if (pointInBounds(playerBox.position.x, playerBox.position.y, wallRects[i])) {
+                // console.log("player collision!")
+            }
+
+            // then perform a raycast from our player to the box, and don't move if we can't go there
+            if (raycast(playerBox.position.x, playerBox.position.y, input.px, input.py, 20, wallRects[i])) {
+                // console.log("RAYCAST HIT");
+                return;
+            }
+        }
+
         // set our last-frame positions
         worldXLF = worldContainer.position.x;
         worldYLF = worldContainer.position.y;
         // then move our world around, so that we can move through it
         worldContainer.position.x -= input.px * moveSpeed;
         worldContainer.position.y -= input.py * moveSpeed;
-        
+        // adjust our world scale
         worldContainer.scale = worldScale;
-
         // now get our world delta
         let worldXDelta = worldXLF - worldContainer.position.x;
         let worldYDelta = worldYLF - worldContainer.position.y;
         // since we want the player to move exactly the same amount as the world is, we need to get how much the world has moved since last frame, and move the player with it
         // after that move our player around, so that they always stay in the centered on the screen
-
-        // check if the player is colliding with all of our box colliders
-        for (let i = 0; i < wallTiles.length; i++)
-        {
-            // now compare the player's box to all of the boxes of the tiles
-            if (attemptPlayerMovement(cursorSprite, wallTiles[i]))
-            {
-                console.log("collision registered");
-                colcheckText.style.fill = '00ff00'
-                break;
-            } else
-            {
-                colcheckText.style.fill = 'ffffff'
-            }
-        }
-
         // to make sure this works correctly we need to modify the global object position
         playerIdleSprite.position.x += worldXDelta / worldScale; // we divide this number by the world scale so that it moves according to the relative scale of the environment
         playerIdleSprite.position.y += worldYDelta / worldScale; // when we change the container size it is changing in pixels, so the delta will be more / less pixels in size.
@@ -480,7 +485,7 @@ const log = console.log;
     debugContainer.addChild(debugBR);
 
     // this function checks a position ahead of the player, to check if the movement is valid or not
-    function attemptPlayerMovement(rectA, rectB)
+    function checkColliderOverlap(rectA, rectB)
     {
         // get our first rectangle's top left, top right, bottom left, and bottom right points
         var aPx, aPy, aTLX, aTLY, aTRX, aTRY, aBLX, aBLY, aBRX, aBRY;
@@ -526,19 +531,6 @@ const log = console.log;
         var bTopRight = [bTRX, bTRY];
         var bBottomLeft = [bBLX, bBLY];
         var bBottomRight = [bBRX, bBRY];
-
-        // // show our debug
-        // debugTR.position.x = aTopRight[0];
-        // debugTR.position.y = aTopRight[1];
-
-        // debugTL.position.x = aTopLeft[0];
-        // debugTL.position.y = aTopLeft[1];
-
-        // debugBR.position.x = aBottomRight[0];
-        // debugBR.position.y = aBottomRight[1];
-
-        // debugBL.position.x = aBottomLeft[0];
-        // debugBL.position.y = aBottomLeft[1];
         
         debugTR.position.x = bTopRight[0];
         debugTR.position.y = bTopRight[1];
@@ -556,26 +548,26 @@ const log = console.log;
         // now compare all of the positions from rectA to the the positions in rectB for overlaps,
         // then compare all the positions in rectB for A overlaps
         if (
-        (pointInBounds(aTopLeft, bTopLeft, bBottomRight) ||
-        pointInBounds(aTopRight, bTopLeft, bBottomRight) || 
-        pointInBounds(aBottomRight, bTopLeft, bBottomRight) ||
-        pointInBounds(aBottomLeft, bTopLeft, bBottomRight)) == true
+        (pointInBoundsPTLBR(aTopLeft, bTopLeft, bBottomRight) ||
+        pointInBoundsPTLBR(aTopRight, bTopLeft, bBottomRight) || 
+        pointInBoundsPTLBR(aBottomRight, bTopLeft, bBottomRight) ||
+        pointInBoundsPTLBR(aBottomLeft, bTopLeft, bBottomRight)) == true
         
         ||        
         
-        (pointInBounds(bTopLeft, aTopLeft, aBottomRight) ||
-        pointInBounds(bTopRight, aTopLeft, aBottomRight) || 
-        pointInBounds(bBottomRight, aTopLeft, aBottomRight) ||
-        pointInBounds(bBottomLeft, aTopLeft, aBottomRight)) == true
+        (pointInBoundsPTLBR(bTopLeft, aTopLeft, aBottomRight) ||
+        pointInBoundsPTLBR(bTopRight, aTopLeft, aBottomRight) || 
+        pointInBoundsPTLBR(bBottomRight, aTopLeft, aBottomRight) ||
+        pointInBoundsPTLBR(bBottomLeft, aTopLeft, aBottomRight)) == true
         )
         {
-            console.log("collision occurred between " + rectA.name + " and " + rectB.name + " at position: " );
+            // console.log("collision occurred between " + rectA.name + " and " + rectB.name + " at position: " );
             return true;
         }
     }
 
-    // checks if a point is within a bound
-    function pointInBounds(point, topLeft, bottomRight)
+    // checks if a point is within a bound, using a point, top left position, and bottom right position
+    function pointInBoundsPTLBR(point, topLeft, bottomRight)
     {
         // if we're in between the two X points and the two Y points
         if ((point[0] > topLeft[0] & point[0] < bottomRight[0]) & (point[1] > topLeft[1] & point[1] < bottomRight[1]))
@@ -584,6 +576,57 @@ const log = console.log;
             console.log(point[0] + ", " + point[1]);
             return true;
         }
+    }
+
+    // checks if a point is within a bounds using a pointx, pointy, and a collider
+    function pointInBounds(pointx, pointy, collider)
+    {
+        // pivot
+        let bPx = collider.getGlobalPosition().x;
+        let bPy = collider.getGlobalPosition().y;
+        // shape
+        let bTLX = bPx;
+        let bTLY = bPy; 
+        let bBRX = bPx + collider.width * worldScale;
+        let bBRY = bPy + collider.height * worldScale;
+
+        // if we're in between the two X points and the two Y points
+        if ((pointx > bTLX & pointx < bBRX) & (pointy > bTLY & pointy < bBRY))
+        {
+            // collision has occured because a point within the two bounds overlapped with another of the bounds!
+            // console.log(pointx + ", " + pointy);
+            return true;
+        }
+    }
+
+    // checks all the points in a line from a position, in a direction
+    function raycast(positionx, positiony, directionx, directiony, length, targetRect)
+    {
+        // first normalize our direction based on which 
+        // let dir = normalizeXY(directionx, directiony);
+        let dir = [directionx, directiony];
+        // if something is NaN then set it to 0 
+        dir[0] = isNaN(dir[0]) ? 0 : dir[0];
+        dir[1] = isNaN(dir[1]) ? 0 : dir[1];
+
+        // loop from the start position
+        for (let x = 1; x < length; x++)
+        {
+            for (let y = 1; y < length; y++)
+            {
+                let cx = positionx + (x * dir[0]);
+                let cy = positiony + (y * dir[1]);
+
+                // change our text to showcase where we are checking out raycast
+                colcheckText.text = (cx) + ", " + (cy);
+                // check the position for the target rect
+                if (pointInBounds(cx, cy, targetRect))
+                {
+                    return pointInBounds(cx, cy, targetRect);
+                }
+            }
+        }
+
     }
 
     // now apply movement to the player
@@ -685,6 +728,22 @@ const log = console.log;
     cursorSprite.anchor = 0.5;
     // then lets add it to the stage
     application.stage.addChild(cursorSprite);
+
+     // in order to check collisions, we have to run a loop through all of the colliders we want to check
+    // in this case, we want to compare the cursor to our walls, so we compare our cursor's position to all of the walls
+    for (let i = 0; i < wallRects.length; i++)
+        {
+            // now compare the player's box to all of the boxes of the tiles
+            if (checkColliderOverlap(cursorSprite, wallRects[i]))
+            {
+                console.log("collision registered");
+                colcheckText.style.fill = '00ff00'
+                break;
+            } else
+            {
+                colcheckText.style.fill = 'ffffff'
+            }
+        }
 
     // run our special ticker for camera and cursor operations
     application.ticker.add(() => {
