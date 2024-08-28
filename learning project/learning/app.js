@@ -286,9 +286,6 @@ const log = console.log;
         }
     }
 
-    // now lets add the key to the world
-
-
     /// if we want things to happen in the game, we need to use a ticker
     /// tickers essentially run the game, and all of the code within them is executed at the framerater of the user's monitor
     /// in most cases this will be 60fps, in others it may be 120fps, or more
@@ -565,7 +562,7 @@ const log = console.log;
         if (space.isDown && getDistanceToPlayer(npcInside) < 250)
         {
             // outside npc
-            npcInsideText.text = "There is an exit to the west.";
+            npcInsideText.text = "There is an exit to the west, covered in dirt";
         } else {
             npcInsideText.text = "";
         }
@@ -1132,8 +1129,44 @@ const log = console.log;
         cursorSprite.position.y = mousePositionY;
     });
     
-    
+    // now lets add our exit, our exit check, and our victory screen
+    const exitTex = await PIXI.Assets.load('/images/ground-gunk.png');
+    exitTex.source.scaleMode = 'nearest';
+    const exitSprite = new PIXI.Sprite(exitTex);
+    // then place the sprite in the world
+    worldContainer.addChild(exitSprite);
+    exitSprite.scale = 4;
+    exitSprite.position.set(worldCenter - wTS * 20, worldCenter);
 
+    const exitText = new PIXI.Text({
+        text: "Hooray! Game Complete!",
+        style: {
+            // fill the same as color
+            fill: '#ffffff',
+            // we can change the font
+            fontFamily: 'Arial',
+            fontSize: 20,
+            fontStyle: 'italic',
+            fontWeight: 'bold',
+            stroke: { color: '#000000', width: 5},
+        } });
+
+    exitText.alpha = 0;
+
+    application.stage.addChild(exitText);
+    exitText.position.set(400,350);
+
+    function exitCheck()
+    {
+        if (getDistanceToPlayer(exitSprite) < 400)
+        {
+            exitText.alpha = 1;
+        }
+    }
+
+    application.ticker.add(()=>{
+        exitCheck();
+    });
 
     /// this section features graphics functions that can assist in your process of making simple shapes, text, and colors. 
     /// they are not used in this specific demo, but you can modify them as you work with them.
