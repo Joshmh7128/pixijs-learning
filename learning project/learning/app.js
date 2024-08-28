@@ -91,40 +91,203 @@ const log = console.log;
     const wallPlacementChance = 10;
 
     // set the wall tile spacing to larger than the size of the sprite so that we can place them spaced out in the environment
-    const wallTileSpacing = 48 * 2;
+    const wTS = 44; // wTS = wall tile spacing
     let wallRects = []; // this array holds all of our wall tiles in the game, so we can check against them later
     
-    // then let's loop and place some walls
-    for (let x = 0; x < worldSize.worldX; x += wallTileSpacing) {
-        for (let y = 0; y < worldSize.worldY; y += wallTileSpacing)
+    // we can build off of our world center
+    let worldCenter = 1024;
+
+    // since we want to make a map of our walls, we can build a list of coordinates to place them
+    var wallPositions = [
+        // the center room
+        // front wall right
             {
-                // lets check against our placement chance to see if we are placing a tile
-                if (Math.floor(Math.random() * 100) < wallPlacementChance) {
-                    // create a new sprite
-                    var spr = new PIXI.Sprite(desertBlockTexture);
-                    // noice that, here we use the normal "addChild" function so that our objects are always placed at the highest possible depth
-                    worldContainer.addChild(spr).position.set(x,y);
-                    // now lets create a new rectangle over the blocks, so that we can have collisions with players and enemies
-                    var rec = new PIXI.Graphics()
-                            // we use .rect to define it as a rectangle then input the x, y, width, and height
-                            // be sure to call the shape function before .fill or .stroke, if you call it afterwards it will not render!
-                            .rect(6,3,34,48) // these are teh demensions we want to have for the COLLIISION of the wall
-                            // we then have to fill the rectangle
-                            .fill({
-                            color: 0x000000,
-                            alpha: 1}
-                    );
-                    // add it to this block
-                    worldContainer.addChild(rec);
-                    rec.position = spr.position;
-                    // then calculate the pivot point 
-                    //rec.pivot.x = rec.position.x + rec.width/2;
-                    //rec.pivot.y = rec.position.y + rec.height/2;
-                    // then add our sprite to the array
-                    wallRects.push(rec);
-                }
+            "x" : worldCenter,
+            "y" : worldCenter-(wTS*5),
+        },
+        {
+            "x" : worldCenter+(wTS),
+            "y" : worldCenter-(wTS*5),
+        },
+        {
+            "x" : worldCenter+(wTS*2),
+            "y" : worldCenter-(wTS*5),
+        },
+        {
+            "x" : worldCenter+(wTS*3),
+            "y" : worldCenter-(wTS*5),
+        },
+        // front wall left
+        {
+            "x" : worldCenter-(wTS*2),
+            "y" : worldCenter-(wTS*5),
+        },
+        {
+            "x" : worldCenter-(wTS*3),
+            "y" : worldCenter-(wTS*5),
+        },
+        {
+            "x" : worldCenter-(wTS*4),
+            "y" : worldCenter-(wTS*5),
+        },
+        {
+            "x" : worldCenter-(wTS*5),
+            "y" : worldCenter-(wTS*5),
+        },
+        // left side wall
+        {
+            "x" : worldCenter-(wTS*5),
+            "y" : worldCenter-(wTS*6),
+        },    
+        {
+            "x" : worldCenter-(wTS*5),
+            "y" : worldCenter-(wTS*7),
+        },    
+        {
+            "x" : worldCenter-(wTS*5),
+            "y" : worldCenter-(wTS*8),
+        },    
+        {
+            "x" : worldCenter-(wTS*5),
+            "y" : worldCenter-(wTS*9),
+        },
+            
+        {
+            "x" : worldCenter-(wTS*5),
+            "y" : worldCenter-(wTS*10),
+        },
+        // right side wall
+        {
+            "x" : worldCenter+(wTS*3),
+            "y" : worldCenter-(wTS*6),
+        },    
+        {
+            "x" : worldCenter+(wTS*3),
+            "y" : worldCenter-(wTS*7),
+        },    
+        {
+            "x" : worldCenter+(wTS*3),
+            "y" : worldCenter-(wTS*8),
+        },    
+        {
+            "x" : worldCenter+(wTS*3),
+            "y" : worldCenter-(wTS*9),
+        },
+            
+        {
+            "x" : worldCenter+(wTS*3),
+            "y" : worldCenter-(wTS*10),
+        },
+        // back wall
+        {
+            "x" : worldCenter,
+            "y" : worldCenter-(wTS*10),
+        },
+        {
+            "x" : worldCenter+(wTS),
+            "y" : worldCenter-(wTS*10),
+        },
+        {
+            "x" : worldCenter+(wTS*2),
+            "y" : worldCenter-(wTS*10),
+        },
+        {
+            "x" : worldCenter+(wTS*3),
+            "y" : worldCenter-(wTS*10),
+        },
+        {
+            "x" : worldCenter-(wTS),
+            "y" : worldCenter-(wTS*10),
+        },
+        {
+            "x" : worldCenter-(wTS*2),
+            "y" : worldCenter-(wTS*10),
+        },
+        {
+            "x" : worldCenter-(wTS*3),
+            "y" : worldCenter-(wTS*10),
+        },
+        {
+            "x" : worldCenter-(wTS*4),
+            "y" : worldCenter-(wTS*10),
+        },
+        {
+            "x" : worldCenter-(wTS*5),
+            "y" : worldCenter-(wTS*10),
+        },
+    ];
+
+    // then let's loop and place some walls
+    for (let i = 0; i < wallPositions.length; i ++) {
+        // get our positions
+        let x = wallPositions[i].x;
+        let y = wallPositions[i].y;
+
+        // create a new sprite
+        var spr = new PIXI.Sprite(desertBlockTexture);
+        // noice that, here we use the normal "addChild" function so that our objects are always placed at the highest possible depth
+        worldContainer.addChild(spr).position.set(x,y);
+        // now lets create a new rectangle over the blocks, so that we can have collisions with players and enemies
+        var rec = new PIXI.Graphics()
+                // we use .rect to define it as a rectangle then input the x, y, width, and height
+                // be sure to call the shape function before .fill or .stroke, if you call it afterwards it will not render!
+                .rect(6,3,48,48) // these are the demensions we want to have for the COLLIISION of the wall
+                // we then have to fill the rectangle
+                .fill({
+                color: 0x000000,
+                // in order to make sure we can't see these rects for our collisions, we set their alpha to 0
+                alpha: 0}
+        );
+        // add it to this block
+        worldContainer.addChildAt(rec, 0);
+        rec.position = spr.position;
+        // then calculate the pivot point 
+        //rec.pivot.x = rec.position.x + rec.width/2;
+        //rec.pivot.y = rec.position.y + rec.height/2;
+        // then add our sprite to the array
+        wallRects.push(rec);
+    }
+
+    // now lets create our locked door
+    const lockedDoorTexture = await PIXI.Assets.load('./images/locked-desert-block.png');
+    lockedDoorTexture.source.scaleMode = 'nearest';
+    const lockedDoorSprite = new PIXI.Sprite(lockedDoorTexture);
+    // now place the door in the world, and give it an associated rect
+    worldContainer.addChild(lockedDoorSprite);
+    lockedDoorSprite.position.set(worldCenter-wTS, worldCenter-wTS*5);
+    // now create a hitbox for the door
+    var lockedDoorRect = new PIXI.Graphics()
+    .rect(6,3,34,48)
+    .fill({
+    color: 0x000000,
+    // in order to make sure we can't see these rects for our collisions, we set their alpha to 0
+    alpha: 0});
+    // then position the rect
+    lockedDoorRect.position = lockedDoorSprite.position;
+    // add it to the world
+    worldContainer.addChild(lockedDoorRect);
+    // and add it to our walls
+    wallRects.push(lockedDoorRect);
+
+    // the player does not have the key
+    let playerHasKey = false;
+
+    // now we can write a function to check if the player is near the door, and if they have a key
+    function lockedDoorCheck()
+    {
+        // this function will run every frame, and check to see if the player has a key yet
+        // then if we are close to the door and have a key, destroy the door
+        if (playerHasKey && getDistanceToPlayer(lockedDoorSprite) < 400)
+        {
+            // turn off the sprite
+            lockedDoorSprite.alpha = 0;
+            // remove the rect from the collision list
+            lockedDoorRect.position.set(0,0);
         }
     }
+
+    // now lets add the key to the world
+
 
     /// if we want things to happen in the game, we need to use a ticker
     /// tickers essentially run the game, and all of the code within them is executed at the framerater of the user's monitor
@@ -135,7 +298,7 @@ const log = console.log;
 
     // then run the ticker once every frame, increasing time and moving our sprite
     application.ticker.add(() => {
-
+        lockedDoorCheck();
         // running code here will run once ever frame
         time += 1;
     });
@@ -297,7 +460,7 @@ const log = console.log;
 
     // then so that we can check collisions later, add an invisible rectangle over the player
     const playerBox = new PIXI.Graphics()
-    .rect(-6,-6,12,12)
+    .rect(-6,-6,16,16)
     // we then have to fill the rectangle
     .fill({
         color: 0x000000,
@@ -308,9 +471,133 @@ const log = console.log;
     playerBox.position.y = playerIdleSprite.position.y;
     playerContainer.addChildAt(playerBox, application.stage.children.length);
 
+    // function for checking the distance between and object and the player
+    function getDistanceToPlayer(obj)
+    {   
+        var objdis = obj.getGlobalPosition();
+        var playerPos = playerContainer.getGlobalPosition();
+        var pdisx = objdis.x - (playerPos.x + (1024 * worldScale));
+        var pdisy = objdis.y - (playerPos.y + (1024 * worldScale));
+        var pdis = Math.abs(pdisx) + Math.abs(pdisy);
+        return pdis;
+    }
+
+    // now lets add some NPCs
+    const npcTexture = await PIXI.Assets.load('images/bandit.png');
+    npcTexture.source.scaleMode = 'nearest';
+    npcTexture.pivot = 0.5;
+    const npcOutside = new PIXI.Sprite(npcTexture);
+    const npcInside = new PIXI.Sprite(npcTexture);
+    // now make two NPCs, one inside the walls and outside the walls
+    npcOutside.position.set(worldCenter + 48*3, worldCenter - 48*2);
+    npcInside.position.set(worldCenter - 48, worldCenter - 48*6);
+    npcInside.pivot.set(npcInside.width / 2, npcInside.height / 2);
+    npcOutside.pivot.set(npcOutside.width / 2, npcOutside.height / 2);
+    npcOutside.scale = 2;
+    npcInside.scale = 2;
+    
+    // then add them both to the world container
+    worldContainer.addChild(npcInside);
+    worldContainer.addChild(npcOutside);
+
+    // now that the NPCs are in, lets do some checks to make sure we show the right text
 
     // you can find more about the keyboard code below, here - https://github.com/kittykatattack/learningPixi?tab=readme-ov-file#keyboard
     // here is a full list of key codes to be used - https://developer.mozilla.org/en-US/docs/Web/API/UI_Events/Keyboard_event_key_values
+
+    // now add in our rendering text
+    const npcOutsideText = new PIXI.Text({
+        text: "",
+        style: {
+            // fill the same as color
+            fill: '#ffffff',
+            // we can change the font
+            fontFamily: 'Arial',
+            fontSize: 20,
+            fontStyle: 'italic',
+            fontWeight: 'bold',
+            stroke: { color: '#000000', width: 5},
+        } });     
+
+    // now add in our rendering text
+    const npcInsideText = new PIXI.Text({
+        text: "",
+        style: {
+            // fill the same as color
+            fill: '#ffffff',
+            // we can change the font
+            fontFamily: 'Arial',
+            fontSize: 20,
+            fontStyle: 'italic',
+            fontWeight: 'bold',
+            stroke: { color: '#000000', width: 5},
+        } }); 
+        
+    // set the text positions
+    npcOutsideText.position.x = npcOutside.position.x - 132;
+    npcOutsideText.position.y = npcOutside.position.y - 48;
+
+    npcInsideText.position.x = npcInside.position.x - 132;
+    npcInsideText.position.y = npcInside.position.y - 48;
+
+    // add to world
+    worldContainer.addChild(npcOutsideText);
+    worldContainer.addChild(npcInsideText);
+    // the default text
+    npcOutsideText.text = "There's a key to the east of here."
+
+    // runs every frame to check if we're interacting with NPCs
+    function npcTextCheck()
+    {
+        // if we're near the outside npc and holding space, show the text
+        if (space.isDown && getDistanceToPlayer(npcOutside) < 250)
+        {
+            // outside npc
+            if (!playerHasKey)
+                npcOutsideText.text = "There's a key to the east of here.";
+            else
+                npcOutsideText.text = "Great, my friend will tell you how to escape.";
+        } else {
+            npcOutsideText.text = "";
+        }
+        
+        // inside npc
+        if (space.isDown && getDistanceToPlayer(npcInside) < 250)
+        {
+            // outside npc
+            npcInsideText.text = "There is an exit to the west.";
+        } else {
+            npcInsideText.text = "";
+        }
+    }
+
+    // now add our key
+    const keyTexture = await PIXI.Assets.load('images/key.png');
+    keyTexture.source.scaleMode = 'nearest';
+    const keySprite = new PIXI.Sprite(keyTexture);
+    keySprite.position.set(worldCenter + 48 * 12, worldCenter);
+    keySprite.scale.set(2,2);
+    keySprite.pivot.set(keySprite.width / 2, keySprite.height / 2);
+    worldContainer.addChild(keySprite);
+
+    // now make a function to track our key progress
+    function keyCheck()
+    {
+        // now if we are close to the key, destroy it, and change our key boolean
+        if (getDistanceToPlayer(keySprite) < 100)
+        {
+            playerHasKey = true;
+            // make it invisible
+            keySprite.alpha = 0;
+        }
+    }
+
+    // run a ticker for our npc text checks and key checks
+    application.ticker.add(() => {
+        npcTextCheck();
+        keyCheck();
+        pdischeckText.text = getDistanceToPlayer(keySprite);
+    });
 
     // now we need a function to perform keyboard inputs
     function keyboard(value) {
@@ -365,7 +652,7 @@ const log = console.log;
     let input = {px, py};
     input.px = 0;
     input.py = 0;
-    let moveSpeed = 2;
+    let moveSpeed = 3;
 
     // now we can create our key objects to listen for specific keys
     const wKey = keyboard('w');
@@ -379,6 +666,7 @@ const log = console.log;
     const arrowRight = keyboard('ArrowRight');
     const arrowLeft = keyboard('ArrowLeft');
     const rKey = keyboard('r');
+    const space = keyboard(' ');
     // we can then do specific things with our keys
     function capturePlayerInput()
     {
@@ -790,10 +1078,26 @@ const log = console.log;
                 fontWeight: 'bold',
                 stroke: { color: '#000000', width: 5},
             } });
+
+                
+    const pdischeckText = new PIXI.Text({
+        text: "",
+        style: {
+            // fill the same as color
+            fill: '#ffffff',
+            // we can change the font
+            fontFamily: 'Arial',
+            fontSize: 20,
+            fontStyle: 'italic',
+            fontWeight: 'bold',
+            stroke: { color: '#000000', width: 5},
+        } });
     
     application.stage.addChild(mousePosText); 
     colcheckText.position.y = 22;       
     application.stage.addChild(colcheckText); 
+    pdischeckText.position.y = 44;
+    application.stage.addChild(pdischeckText)
 
     // lets place a sprite in the scene as our cursor
     const cursorTexture = await PIXI.Assets.load('./images/cursor.png');
